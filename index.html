@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DayFlow の予定を送る</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", sans-serif;
+      background: #FBF4F3;
+      color: #222;
+      text-align: center;
+    }
+    .icon { width: 72px; height: 72px; margin-top: 24px; }
+    h1 { font-size: 18px; margin: 12px 0 8px; }
+    p { font-size: 15px; line-height: 1.6; margin: 8px 0; }
+    .sub { color: #777; font-size: 13px; }
+    .error { color: #C0393F; }
+  </style>
+</head>
+<body>
+  <img class="icon" src="icon.png" alt="DayFlow">
+  <h1 id="title">DayFlow</h1>
+  <p id="status">準備しています…</p>
+  <p class="sub" id="detail"></p>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    // あとで LINE Developers で作った LIFF ID に入れかえる
+    const LIFF_ID = "LIFF_ID_HERE";
+    // カードに出す DayFlow のアイコン（このページと同じ場所に置いた icon.png）
+    const ICON_URL = new URL("icon.png", location.href).href;
+    const APP_RED = "#C0393F";
+
+    const statusEl = document.getElementById("status");
+    const detailEl = document.getElementById("detail");
+
+    function show(message, detail, isError) {
+      statusEl.textContent = message;
+      statusEl.className = isError ? "error" : "";
+      detailEl.textContent = detail || "";
+    }
+
+    // URL のパラメーター：t = 予定の名前、d = 日時の文字、p = 場所、u = 開くための URL
+    const params = new URLSearchParams(location.search);
+    const title = (params.get("t") || "").trim();
+    const dateText = (params.get("d") || "").trim();
+    const place = (params.get("p") || "").trim();
+    const openURL = (params.get("u") || "").trim();
+
+    // 開く URL の最後に openExternalBrowser=1 をつける（LINE の中ではなく Safari で開くため）
+    function externalURL(url) {
+      if (!url) return "";
+      return url + (url.includes("?") ? "&" : "?") + "openExternalBrowser=1";
+    }
+
+    // 「日時」「場所」の1行（左にうすい見出し、右に中身）
+    function row(label, value) {
+      return {
+        type: "box",
+        layout: "baseline",
+        spacing: "md",
+        contents: [
+          { type: "text", text: label, size: "sm", color: "#888888", flex: 1 },
+          { type: "text", text: value, size: "sm", color: "#333333", wrap: true, flex: 5 }
+        ]
+      };
+    }
+
+    // 送るカード（Flex Message）
+    function buildMessage() {
+      const bodyRows = [row("日時", dateText || "未定")];
+      if (place) bodyRows.push(row("場所", place));
+
+      const bubble = {
+        type: "bubble",
+        header: {
+          type: "box",
+          layout: "horizontal",
+          spacing: "md",
+          paddingAll: "16px",
+          paddingBottom: "8px",
+          contents: [
+            { type: "image", url: ICON_URL, size: "xs", aspectRatio: "1:1", aspectMode: "cover", flex: 0 },
+            { type: "text", text: title || "予定", weight: "bold", size: "lg", wrap: true, gravity: "center", flex: 1 }
+          ]
+        },
+        body: {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          paddingTop: "8px",
+          contents: bodyRows
+        }
+      };
+
+      if (openURL) {
+        bubble.footer = {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            {
+              type: "button",
+              style: "primary",
+              color: APP_RED,
+              action: { type: "uri", label: "DayFlow で開く", uri: externalURL(openURL) }
+            }
+          ]
+        };
+      }
+
+      return {
+        type: "flex",
+        altText: "予定：" + (title || "予定") + " " + dateText,
+        contents: bubble
+      };
+    }
+
+    async function main() {
+      if (title) document.getElementById("title").textContent = title;
+
+      try {
+        await liff.init({ liffId: LIFF_ID });
+      } catch (error) {
+        show("ページを準備できませんでした", String(error && error.message || error), true);
+        return;
+      }
+
+      // LINE の中で開かれていないときは、送れないので案内だけ出す
+      if (!liff.isInClient()) {
+        show("LINE アプリで開いてください", "このページは LINE の中で開くと、予定のカードを送れます。");
+        return;
+      }
+
+      if (!liff.isApiAvailable("shareTargetPicker")) {
+        show("この LINE では送れません", "LINE を最新にしてから、もう一度お試しください。", true);
+        return;
+      }
+
+      show("送る相手を選んでください");
+      try {
+        // 送る相手を選ぶ画面。送った・キャンセルした、どちらでもこのページを閉じる
+        await liff.shareTargetPicker([buildMessage()], { isMultiple: true });
+      } catch (error) {
+        show("送れませんでした", String(error && error.message || error), true);
+        return;
+      }
+      liff.closeWindow();
+    }
+
+    main();
+  </script>
+</body>
+</html>
