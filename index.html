@@ -97,6 +97,8 @@
       };
 
       if (openURL) {
+        // カード全体を押しても、ボタンと同じ URL を開く
+        bubble.action = { type: "uri", label: "DayFlow で開く", uri: externalURL(openURL) };
         bubble.footer = {
           type: "box",
           layout: "vertical",
