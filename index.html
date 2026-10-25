@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DayFlow の予定を送る</title>
+  <title>Pikola の予定を送る</title>
   <style>
     body {
       margin: 0;
@@ -21,8 +21,8 @@
   </style>
 </head>
 <body>
-  <img class="icon" src="icon.png" alt="DayFlow">
-  <h1 id="title">DayFlow</h1>
+  <img class="icon" src="icon.png" alt="Pikola">
+  <h1 id="title">Pikola</h1>
   <p id="status">準備しています…</p>
   <p class="sub" id="detail"></p>
 
@@ -30,7 +30,7 @@
   <script>
     // LINE Developers で作った LIFF アプリの ID
     const LIFF_ID = "2012054515-Ieg8C8US";
-    // カードに出す DayFlow のアイコン（このページと同じ場所に置いた icon.png）
+    // カードに出す Pikola のアイコン（このページと同じ場所に置いた icon.png）
     const ICON_URL = new URL("icon.png", location.href).href;
     const APP_RED = "#C0393F";
 
@@ -98,7 +98,7 @@
 
       if (openURL) {
         // カード全体を押しても、ボタンと同じ URL を開く
-        bubble.action = { type: "uri", label: "DayFlow で開く", uri: externalURL(openURL) };
+        bubble.action = { type: "uri", label: "Pikola で開く", uri: externalURL(openURL) };
         bubble.footer = {
           type: "box",
           layout: "vertical",
@@ -107,7 +107,7 @@
               type: "button",
               style: "primary",
               color: APP_RED,
-              action: { type: "uri", label: "DayFlow で開く", uri: externalURL(openURL) }
+              action: { type: "uri", label: "Pikola で開く", uri: externalURL(openURL) }
             }
           ]
         };
